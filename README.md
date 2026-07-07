@@ -88,6 +88,12 @@ Instale dependências:
 npm install
 ```
 
+Crie o arquivo de ambiente local a partir do exemplo seguro:
+
+```bash
+cp .env.example .env
+```
+
 Suba o banco:
 
 ```bash
