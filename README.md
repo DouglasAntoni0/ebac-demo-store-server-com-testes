@@ -1,183 +1,74 @@
-# EBAC Demo Store Server com Testes
+# EBAC Demo Store — backend e testes
 
-![NestJS](https://img.shields.io/badge/NestJS-backend-E0234E?style=for-the-badge&logo=nestjs&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-api-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
-![Prisma](https://img.shields.io/badge/Prisma-dados-2D3748?style=for-the-badge&logo=prisma&logoColor=white)
-![Jest](https://img.shields.io/badge/Jest-testes-C21325?style=for-the-badge&logo=jest&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-ambiente-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+Backend de estudos em NestJS/TypeScript, com Prisma, PostgreSQL, autenticação, REST, GraphQL e testes Jest. `k6-tests/` contém scripts de carga para clientes e produtos.
 
-Backend da EBAC Demo Store com stack Node/NestJS, Prisma, GraphQL, autenticação e testes automatizados. O projeto serve como base para validar uma API de e-commerce com atenção a setup, dados, execução local e testabilidade.
+## Preparar o ambiente local
 
-Este repositório é importante dentro de uma visão de Quality Engineering porque mostra que qualidade não está restrita à interface. Uma aplicação confiável depende de API consistente, banco previsível, autenticação, validações e testes em camada de serviço.
-
-## Visão geral
-
-A aplicação usa NestJS e TypeScript para estruturar o backend, Prisma para acesso a dados e Jest/Supertest para testes. O projeto inclui scripts para subir banco com Docker, aplicar migrations, gerar client Prisma, popular dados e executar a suíte.
-
-Em termos de QA, isso permite trabalhar com uma base realista de backend:
-
-- API com autenticação;
-- persistência de dados;
-- GraphQL/Apollo;
-- Swagger;
-- testes automatizados;
-- ambiente local reproduzível.
-
-## Objetivo do projeto
-
-O objetivo é disponibilizar um backend testável para a EBAC Demo Store, com setup suficientemente completo para validar comportamento de API e dados.
-
-A proposta cobre:
-
-- configuração de servidor NestJS;
-- estrutura de API moderna;
-- banco via Docker;
-- migrations e seed;
-- testes com Jest e Supertest;
-- base para validações funcionais e de contrato.
-
-## Stack utilizada
-
-| Tecnologia | Papel no projeto |
-| --- | --- |
-| NestJS | Framework backend |
-| TypeScript | Tipagem e estrutura da aplicação |
-| Prisma | ORM e camada de acesso a dados |
-| Docker Compose | Banco local reprodutível |
-| GraphQL/Apollo | Camada de API GraphQL |
-| Swagger | Documentação/exploração de API REST |
-| Jest | Runner de testes |
-| Supertest | Validação de endpoints HTTP |
-| ts-jest | Execução de testes TypeScript |
-
-## O que este projeto demonstra
-
-| Frente | Valor técnico | Relação com QA |
-| --- | --- | --- |
-| Backend testável | API organizada em NestJS com TypeScript | Facilita testes em camada de serviço |
-| Dados e persistência | Prisma, migrations, seed e banco via Docker | Garante ambiente previsível |
-| Testes automatizados | Jest, Supertest e configuração `ts-jest` | Permite feedback sem depender da UI |
-| API moderna | GraphQL/Apollo, Swagger, autenticação e validações | Amplia cobertura de integração |
-| Ambiente reprodutível | Scripts para banco, Prisma e servidor | Reduz variação entre execuções |
-
-## Principais scripts
-
-| Comando | Finalidade |
-| --- | --- |
-| `npm run docker:db` | Sobe o banco via Docker Compose |
-| `npm run prisma:generate` | Gera o Prisma Client |
-| `npm run db:init` | Executa migrations e seed inicial |
-| `npm start` | Inicia a API |
-| `npm run start:watch` | Inicia em modo watch |
-| `npm test` | Executa a suíte de testes |
-| `npm run build` | Gera build da aplicação |
-| `npm run db:clean` | Limpa dados via script |
-
-## Como executar localmente
-
-Clone o repositório:
+Requisitos: Node.js 22, npm, PostgreSQL 12 ou Docker com Compose, e k6 para os scripts de carga. O script `docker:db` usa o comando `docker-compose`; se sua instalação fornece apenas `docker compose`, use a alternativa abaixo.
 
 ```bash
 git clone https://github.com/DouglasAntoni0/ebac-demo-store-server-com-testes.git
 cd ebac-demo-store-server-com-testes
-```
-
-Instale dependências:
-
-```bash
 npm install
 ```
 
-Crie o arquivo de ambiente local a partir do exemplo seguro:
+Crie `.env`:
 
-```bash
-cp .env.example .env
+```powershell
+Copy-Item .env.example .env
 ```
 
-Suba o banco:
+No Bash, use `cp .env.example .env`. Confira os valores antes de iniciar os serviços:
+
+| Variável | Uso |
+| --- | --- |
+| `POSTGRESQL_PORT`, `POSTGRESQL_USER`, `POSTGRESQL_PASSWORD` | Porta e credenciais do banco no Compose |
+| `POSTGRESQL_URL` | Conexão Prisma; deve corresponder ao banco acima |
+| `BCRYPT_SALT` | Número de rounds bcrypt; exemplo local: `10` |
+| `JWT_SECRET_KEY` | Segredo de assinatura dos tokens; substitua o placeholder |
+| `JWT_EXPIRATION` | Validade do token, por exemplo `1h` |
+| `PORT` | Porta HTTP da aplicação; exemplo: `3000` |
+
+Suba o banco e aplique o schema existente:
 
 ```bash
-npm run docker:db
-```
-
-Gere o Prisma Client:
-
-```bash
+docker compose -f docker-compose.db.yml up -d
 npm run prisma:generate
-```
-
-Inicialize banco e massa:
-
-```bash
-npm run db:init
-```
-
-Inicie a API:
-
-```bash
+npm run db:migrate-up
+npm run seed
 npm start
 ```
 
-Em outro terminal, execute os testes:
+Com Compose legado, `npm run docker:db` substitui o primeiro comando. Aguarde o PostgreSQL aceitar conexões antes das migrations. Para desenvolvimento com criação de nova migration, existe `npm run db:init`; para reproduzir o schema versionado, os passos acima usam `db:migrate-up`.
+
+O seed cria ou atualiza o usuário local `admin@ebac.com.br`, senha de demonstração `admin`, armazenada como hash bcrypt. Reexecutar o seed redefine essa conta de demonstração. Use banco local de estudos. `customSeed` atua sobre esse mesmo usuário e a operação aguarda sua conclusão antes de encerrar as conexões.
+
+## Executar os testes
 
 ```bash
 npm test
 ```
 
-## Estratégia de qualidade
+Jest procura os testes TypeScript incluídos em `src/`. A existência da configuração e dos specs não substitui a consulta ao resultado da execução. Este repositório não possui workflow de CI versionado.
 
-A estratégia aqui é validar o sistema em uma camada mais próxima da regra de negócio e dos dados. Isso traz vantagens importantes:
+## Performance com k6
 
-- falhas são detectadas antes da interface;
-- o diagnóstico tende a ser mais rápido;
-- a validação de contrato fica mais objetiva;
-- setup e seed reduzem dependência de massa manual;
-- testes podem ser integrados em pipeline com menor custo que E2E.
+Com API e banco locais preparados, em outro terminal:
 
-## Pontos de atenção para QA
+```bash
+k6 run k6-tests/clientes.test.js
+k6 run k6-tests/produtos.test.js
+```
 
-| Ponto | Por que importa |
-| --- | --- |
-| Seed de dados | Garante massa previsível para testes |
-| Migrations | Mantêm banco alinhado com a aplicação |
-| Autenticação | Afeta acesso a endpoints protegidos |
-| GraphQL | Exige validação de queries, mutations e schema |
-| Prisma | Ajuda a entender persistência e modelos |
-| Docker | Reduz variação de ambiente local |
+Os scripts autenticam em `http://localhost:3000/api/login` com a conta de demonstração e consultam `/api/customers` ou `/api/products`. O perfil atual é dez VUs por quinze segundos, com checks de status. Não existem thresholds nesses dois scripts; confira checks, taxa de erro e tempos na saída.
 
-## Troubleshooting
+## Arquivos principais
 
-| Problema | Possível causa | Ação sugerida |
-| --- | --- | --- |
-| API não sobe | Banco indisponível ou dependências ausentes | Rodar `npm install` e `npm run docker:db` |
-| Prisma falha | Client não gerado ou migration pendente | Rodar `npm run prisma:generate` e `npm run db:init` |
-| Testes falham por dados | Seed não executado | Recriar banco e rodar scripts de inicialização |
-| Porta ocupada | Outro processo usando a porta da API | Encerrar processo ou ajustar configuração |
+- `.env.example`: configuração local sem credenciais de serviço reais.
+- `docker-compose.db.yml`: PostgreSQL e volume de dados.
+- `prisma/`: schema e migrations.
+- `src/`: módulos da API e testes.
+- `scripts/`: seed e manutenção dos dados.
+- `k6-tests/`: carga de clientes e produtos.
 
-## Resultado técnico
-
-Este repositório mostra uma visão além da automação de tela: qualidade também depende de API estável, dados previsíveis, setup reprodutível e testes na camada certa. A combinação de NestJS, Prisma, Jest e Supertest fortalece a leitura de arquitetura e aumenta a capacidade de diagnosticar falhas mais cedo.
-
-## Competências evidenciadas
-
-- Testes de backend/API.
-- NestJS e TypeScript.
-- Prisma e modelagem de dados.
-- Docker para ambiente local.
-- Jest/Supertest.
-- GraphQL/Apollo.
-- Setup reprodutível.
-- Pensamento em testes por camada.
-
-## Possíveis evoluções
-
-- Publicar documentação de endpoints principais.
-- Adicionar testes de contrato GraphQL.
-- Criar pipeline com banco de teste.
-- Separar testes unitários, integração e contrato.
-- Gerar relatório de coverage.
-- Criar massa sintética controlada para QA.
-
-## Conclusão
-
-Este projeto é uma boa peça de portfólio técnico porque mostra visão sistêmica: backend, banco, API e testes trabalhando juntos. Para QA/SDET, isso é valioso porque amplia a atuação para além da UI e fortalece diagnóstico, prevenção e qualidade em camadas.
+`npm run db:clean` remove dados pelo script de limpeza; confira o banco configurado antes de usá-lo. O prefixo REST é `/api`, e a porta padrão é 3000. O código disponibiliza configuração de Swagger e resolvers GraphQL para exploração do backend.
